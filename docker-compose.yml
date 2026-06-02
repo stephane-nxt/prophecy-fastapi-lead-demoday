@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prophecy-fastapi-lead-demoday
+    image: prophecy-fastapi-lead-demoday:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    command: tail -f /dev/null

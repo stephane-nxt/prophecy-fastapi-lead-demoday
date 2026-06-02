@@ -21,8 +21,21 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/fastapi-lead-demoday:latest
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/fastapi-lead-demoday:${{ github.sha }}
           build-args: | 
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          proxy_host: ${{ secrets.PROXY_HOST }}
+          proxy_username: ${{ secrets.PROXY_USERNAME }}
+          proxy_key: ${{ secrets.PROXY_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            docker ps -aq --filter "name=fastapi-lead-demoday" | xargs -r docker rm -f
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/fastapi-lead-demoday:${{ github.sha }}
+            docker run -d --name fastapi-lead-demoday -p 8000:8000 ${{ vars.DOCKERHUB_USERNAME }}/fastapi-lead-demoday:${{ github.sha }}
